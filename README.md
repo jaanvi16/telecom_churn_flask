@@ -140,5 +140,3 @@ To ensure stable, accurate predictions even when users fill only the core form i
 This prevents incorrect predictions caused by zero-filling missing fields.
 
 ---
-
-## Project Structure (This Repo)

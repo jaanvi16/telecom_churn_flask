@@ -85,39 +85,48 @@ This system helps telecom companies:
 | Render | Deployment |
 
 ---
+## Project Structure
 
 telecom_churn_flask/
 │
-├── app.py # Flask backend (predict + SHAP + recommendations)
-├── requirements.txt # Dependencies
-├── runtime.txt # Pins Python version for Render
+├── app.py                   # Flask backend (predict + SHAP + recommendations)
+├── requirements.txt         # Dependencies
+├── runtime.txt              # Pins Python version for Render
 │
 ├── models/
-│ ├── final_xgboost_model.pkl
-│ ├── scaler.pkl
-│ ├── shap_explainer.pkl
-│ ├── feature_names.json
-│ └── meta.json
+│   ├── final_xgboost_model.pkl
+│   ├── scaler.pkl
+│   ├── shap_explainer.pkl
+│   ├── feature_names.json
+│   └── meta.json
 │
 ├── templates/
-│ └── index.html # Glassmorphism UI (advanced mode)
+│   └── index.html           # Glassmorphism UI (advanced mode)
 │
 └── static/
-├── css/
-│ └── style.css # Glass UI + gauge styles
-└── js/
-└── app.js # Form -> /predict + gauge + SHAP render + engineered preview
-
+    ├── css/
+    │   └── style.css        # Glass UI + gauge styles
+    └── js/
+        └── app.js           # Form -> /predict + gauge + SHAP render + engineered preview
+        
 ## Run Locally
-
-```bash
 python -m venv .venv
-# activate venv (Windows PowerShell)
+
+# Windows PowerShell:
 .\.venv\Scripts\Activate.ps1
 
 pip install -r requirements.txt
 python app.py
 ---
+
+## Project Journey (What We Built + Key Fixes)
+This project started from a trained XGBoost churn model (with a saved scaler, feature list, and SHAP explainer) and was turned into a full production-style Flask application with an advanced UI. The final web app accepts core Month-1/2/3 usage inputs (ARPU, MOU, recharge patterns, etc.), returns churn probability with a GREEN/YELLOW/RED risk bucket, generates retention recommendations, and provides SHAP explainability for transparency.
+
+Major Technical Challenge: Model Feature Mismatch (153 Features)
+The model expects a full 153-feature vector, but the UI collects a smaller set of inputs. Initially, missing features were filled with zeros, which caused unstable predictions. This was fixed by initializing missing features with training means stored in StandardScaler.mean_, overwriting user inputs, and computing engineered features to match the training pipeline.
+
+Deployment Lesson: Python Version Pinning
+During Render deployment, the build failed when Python 3.14 was used (unsupported by numba). Pinning the runtime to Python 3.12.x resolved dependency installation and enabled SHAP in production.
 
 ## Important Note: Feature Pipeline (Accuracy Fix)
 

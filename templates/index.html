@@ -1,0 +1,443 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Telecom Churn Prediction</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+</head>
+
+<body>
+  <div class="bg-blobs"></div>
+
+  <div class="container py-4">
+    <!-- HERO -->
+    <div class="glass hero mb-3">
+      <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+        <div>
+          <div class="d-flex align-items-center gap-2 mb-1">
+            <div class="brand-dot"></div>
+            <h2 class="mb-0">Telecom Churn Prediction</h2>
+          </div>
+          <div class="text-soft">
+            Advanced Mode • Correct 153-feature completion • SHAP Explainability • Retention Recommendations
+          </div>
+
+          <div class="mt-2 d-flex flex-wrap gap-2">
+            <span class="chip"><i class="bi bi-cpu me-1"></i> XGBoost</span>
+            <span class="chip"><i class="bi bi-sliders me-1"></i> StandardScaler</span>
+            <span class="chip"><i class="bi bi-diagram-3 me-1"></i> 153 Features</span>
+            <span class="chip"><i class="bi bi-lightning-charge me-1"></i> Real-time Inference</span>
+          </div>
+        </div>
+
+        <div class="d-flex gap-2 flex-wrap">
+          <button class="btn btn-glass-success" id="btnLoadGreen">
+            <i class="bi bi-check2-circle me-1"></i>Load GREEN
+          </button>
+          <button class="btn btn-glass-warning" id="btnLoadYellow">
+            <i class="bi bi-exclamation-circle me-1"></i>Load YELLOW
+          </button>
+          <button class="btn btn-glass-danger" id="btnLoadRed">
+            <i class="bi bi-x-circle me-1"></i>Load RED
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-3">
+      <!-- FORM -->
+      <div class="col-12 col-lg-7">
+        <div class="glass cardx">
+          <div class="cardx-header">
+            <div>
+              <h5 class="mb-0">Customer Inputs</h5>
+              <div class="text-soft small">
+                Blank optional fields are filled with baseline training means (safe, in-distribution).
+              </div>
+            </div>
+
+            <div class="form-check form-switch m-0">
+              <input class="form-check-input" type="checkbox" id="includeShap" checked>
+              <label class="form-check-label text-soft" for="includeShap">Include SHAP</label>
+            </div>
+          </div>
+
+          <div class="cardx-body">
+            <form id="churnForm">
+              <div class="mb-3">
+                <label class="form-label text-soft">
+                  Age on Network (aon) — days
+                  <i class="bi bi-info-circle ms-1"
+                     data-bs-toggle="tooltip"
+                     title="Customer tenure in days. Used to compute tenure_months and tenure_segment (risk by tenure)."></i>
+                </label>
+                <input class="form-control glass-input" type="number" step="1" min="0" name="aon" id="aon" required>
+              </div>
+
+              <div class="table-responsive mb-3">
+                <table class="table table-sm align-middle table-glass">
+                  <thead>
+                    <tr>
+                      <th>Feature</th>
+                      <th>Month 1 <div class="small text-soft">(Jun)</div></th>
+                      <th>Month 2 <div class="small text-soft">(Jul)</div></th>
+                      <th>Month 3 <div class="small text-soft">(Aug)</div></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>
+                        ARPU
+                        <i class="bi bi-info-circle ms-1"
+                           data-bs-toggle="tooltip"
+                           title="Average Revenue Per User. Trend/decline is a strong churn signal."></i>
+                      </td>
+                      <td><input class="form-control form-control-sm glass-input" type="number" step="0.01" name="arpu_6" id="arpu_6" required></td>
+                      <td><input class="form-control form-control-sm glass-input" type="number" step="0.01" name="arpu_7" id="arpu_7" required></td>
+                      <td><input class="form-control form-control-sm glass-input" type="number" step="0.01" name="arpu_8" id="arpu_8" required></td>
+                    </tr>
+
+                    <tr>
+                      <td>
+                        Total Outgoing MOU
+                        <i class="bi bi-info-circle ms-1"
+                           data-bs-toggle="tooltip"
+                           title="Total outgoing call minutes. Recent (Month 3/Aug) behavior is most predictive."></i>
+                      </td>
+                      <td><input class="form-control form-control-sm glass-input" type="number" step="0.01" name="total_og_mou_6" id="total_og_mou_6" required></td>
+                      <td><input class="form-control form-control-sm glass-input" type="number" step="0.01" name="total_og_mou_7" id="total_og_mou_7" required></td>
+                      <td><input class="form-control form-control-sm glass-input" type="number" step="0.01" name="total_og_mou_8" id="total_og_mou_8" required></td>
+                    </tr>
+
+                    <tr>
+                      <td>
+                        Total Incoming MOU
+                        <i class="bi bi-info-circle ms-1"
+                           data-bs-toggle="tooltip"
+                           title="Total incoming call minutes. In your model this is the #1 most important churn driver."></i>
+                      </td>
+                      <td><input class="form-control form-control-sm glass-input" type="number" step="0.01" name="total_ic_mou_6" id="total_ic_mou_6" required></td>
+                      <td><input class="form-control form-control-sm glass-input" type="number" step="0.01" name="total_ic_mou_7" id="total_ic_mou_7" required></td>
+                      <td><input class="form-control form-control-sm glass-input" type="number" step="0.01" name="total_ic_mou_8" id="total_ic_mou_8" required></td>
+                    </tr>
+
+                    <tr>
+                      <td>
+                        Total Recharge Amount
+                        <i class="bi bi-info-circle ms-1"
+                           data-bs-toggle="tooltip"
+                           title="Total recharge value in each month. Falling recharge is a churn signal."></i>
+                      </td>
+                      <td><input class="form-control form-control-sm glass-input" type="number" step="0.01" name="total_rech_amt_6" id="total_rech_amt_6" required></td>
+                      <td><input class="form-control form-control-sm glass-input" type="number" step="0.01" name="total_rech_amt_7" id="total_rech_amt_7" required></td>
+                      <td><input class="form-control form-control-sm glass-input" type="number" step="0.01" name="total_rech_amt_8" id="total_rech_amt_8" required></td>
+                    </tr>
+
+                    <tr>
+                      <td>
+                        Total Recharge Count
+                        <i class="bi bi-info-circle ms-1"
+                           data-bs-toggle="tooltip"
+                           title="Number of recharges. Reduced frequency often indicates disengagement."></i>
+                      </td>
+                      <td><input class="form-control form-control-sm glass-input" type="number" step="1" min="0" name="total_rech_num_6" id="total_rech_num_6" required></td>
+                      <td><input class="form-control form-control-sm glass-input" type="number" step="1" min="0" name="total_rech_num_7" id="total_rech_num_7" required></td>
+                      <td><input class="form-control form-control-sm glass-input" type="number" step="1" min="0" name="total_rech_num_8" id="total_rech_num_8" required></td>
+                    </tr>
+
+                    <tr>
+                      <td>
+                        Last Day Recharge Amount
+                        <i class="bi bi-info-circle ms-1"
+                           data-bs-toggle="tooltip"
+                           title="Recharge amount on the last recharge day. Month 3 is highly predictive in your SHAP results."></i>
+                      </td>
+                      <td><input class="form-control form-control-sm glass-input" type="number" step="0.01" name="last_day_rch_amt_6" id="last_day_rch_amt_6" required></td>
+                      <td><input class="form-control form-control-sm glass-input" type="number" step="0.01" name="last_day_rch_amt_7" id="last_day_rch_amt_7" required></td>
+                      <td><input class="form-control form-control-sm glass-input" type="number" step="0.01" name="last_day_rch_amt_8" id="last_day_rch_amt_8" required></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- Advanced (Split Accordions) -->
+              <div class="accordion accordion-glass mb-3" id="advAccordion">
+
+                <!-- 1) Roaming -->
+                <div class="accordion-item glass-acc mb-2">
+                  <h2 class="accordion-header">
+                    <button class="accordion-button collapsed glass-acc-btn" type="button"
+                            data-bs-toggle="collapse" data-bs-target="#advRoam">
+                      <i class="bi bi-globe2 me-2"></i>Roaming (Optional)
+                    </button>
+                  </h2>
+                  <div id="advRoam" class="accordion-collapse collapse" data-bs-parent="#advAccordion">
+                    <div class="accordion-body">
+                      <div class="text-soft small mb-2">
+                        Set all to 0 for non-roaming customers. Helps compute <b>is_roaming_user</b> correctly.
+                      </div>
+
+                      <div class="row g-3">
+                        <div class="col-12 col-md-4">
+                          <label class="form-label text-soft">roam_og_mou_6</label>
+                          <input class="form-control glass-input" type="number" step="0.01" id="roam_og_mou_6" name="roam_og_mou_6" placeholder="optional">
+                        </div>
+                        <div class="col-12 col-md-4">
+                          <label class="form-label text-soft">roam_og_mou_7</label>
+                          <input class="form-control glass-input" type="number" step="0.01" id="roam_og_mou_7" name="roam_og_mou_7" placeholder="optional">
+                        </div>
+                        <div class="col-12 col-md-4">
+                          <label class="form-label text-soft">roam_og_mou_8</label>
+                          <input class="form-control glass-input" type="number" step="0.01" id="roam_og_mou_8" name="roam_og_mou_8" placeholder="optional">
+                        </div>
+
+                        <div class="col-12 col-md-4">
+                          <label class="form-label text-soft">roam_ic_mou_6</label>
+                          <input class="form-control glass-input" type="number" step="0.01" id="roam_ic_mou_6" name="roam_ic_mou_6" placeholder="optional">
+                        </div>
+                        <div class="col-12 col-md-4">
+                          <label class="form-label text-soft">roam_ic_mou_7</label>
+                          <input class="form-control glass-input" type="number" step="0.01" id="roam_ic_mou_7" name="roam_ic_mou_7" placeholder="optional">
+                        </div>
+                        <div class="col-12 col-md-4">
+                          <label class="form-label text-soft">roam_ic_mou_8</label>
+                          <input class="form-control glass-input" type="number" step="0.01" id="roam_ic_mou_8" name="roam_ic_mou_8" placeholder="optional">
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 2) Recharge/Data/Social -->
+                <div class="accordion-item glass-acc mb-2">
+                  <h2 class="accordion-header">
+                    <button class="accordion-button collapsed glass-acc-btn" type="button"
+                            data-bs-toggle="collapse" data-bs-target="#advRecharge">
+                      <i class="bi bi-wallet2 me-2"></i>Recharge / Data / Social (Optional)
+                    </button>
+                  </h2>
+                  <div id="advRecharge" class="accordion-collapse collapse" data-bs-parent="#advAccordion">
+                    <div class="accordion-body">
+                      <div class="row g-3">
+                        <div class="col-12 col-md-4">
+                          <label class="form-label text-soft">
+                            max_rech_amt_6
+                            <i class="bi bi-info-circle ms-1" data-bs-toggle="tooltip"
+                               title="Max recharge amount in Month 1. Often appears in SHAP drivers."></i>
+                          </label>
+                          <input class="form-control glass-input" type="number" step="0.01" id="max_rech_amt_6" name="max_rech_amt_6" placeholder="optional">
+                        </div>
+                        <div class="col-12 col-md-4">
+                          <label class="form-label text-soft">max_rech_amt_7</label>
+                          <input class="form-control glass-input" type="number" step="0.01" id="max_rech_amt_7" name="max_rech_amt_7" placeholder="optional">
+                        </div>
+                        <div class="col-12 col-md-4">
+                          <label class="form-label text-soft">max_rech_amt_8</label>
+                          <input class="form-control glass-input" type="number" step="0.01" id="max_rech_amt_8" name="max_rech_amt_8" placeholder="optional">
+                        </div>
+
+                        <div class="col-12 col-md-4">
+                          <label class="form-label text-soft">total_rech_data_8</label>
+                          <input class="form-control glass-input" type="number" step="0.01" id="total_rech_data_8" name="total_rech_data_8" placeholder="optional">
+                        </div>
+                        <div class="col-12 col-md-4">
+                          <label class="form-label text-soft">av_rech_amt_data_8</label>
+                          <input class="form-control glass-input" type="number" step="0.01" id="av_rech_amt_data_8" name="av_rech_amt_data_8" placeholder="optional">
+                        </div>
+
+                        <div class="col-12 col-md-4">
+                          <label class="form-label text-soft">
+                            fb_user_8
+                            <i class="bi bi-info-circle ms-1" data-bs-toggle="tooltip"
+                               title="Facebook user flag in Month 3 (0/1). If unknown, leave blank."></i>
+                          </label>
+                          <select class="form-select glass-input" id="fb_user_8" name="fb_user_8">
+                            <option value="">(blank)</option>
+                            <option value="0">0</option>
+                            <option value="1">1</option>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 3) 2G indicators -->
+                <div class="accordion-item glass-acc">
+                  <h2 class="accordion-header">
+                    <button class="accordion-button collapsed glass-acc-btn" type="button"
+                            data-bs-toggle="collapse" data-bs-target="#adv2g">
+                      <i class="bi bi-reception-4 me-2"></i>2G Indicators (Optional)
+                    </button>
+                  </h2>
+                  <div id="adv2g" class="accordion-collapse collapse" data-bs-parent="#advAccordion">
+                    <div class="accordion-body">
+                      <div class="row g-3">
+                        <div class="col-12 col-md-4">
+                          <label class="form-label text-soft">count_rech_2g_6</label>
+                          <input class="form-control glass-input" type="number" step="0.01" id="count_rech_2g_6" name="count_rech_2g_6" placeholder="optional">
+                        </div>
+                        <div class="col-12 col-md-4">
+                          <label class="form-label text-soft">count_rech_2g_7</label>
+                          <input class="form-control glass-input" type="number" step="0.01" id="count_rech_2g_7" name="count_rech_2g_7" placeholder="optional">
+                        </div>
+                        <div class="col-12 col-md-4">
+                          <label class="form-label text-soft">count_rech_2g_8</label>
+                          <input class="form-control glass-input" type="number" step="0.01" id="count_rech_2g_8" name="count_rech_2g_8" placeholder="optional">
+                        </div>
+
+                        <div class="col-12 col-md-6">
+                          <label class="form-label text-soft">sachet_2g_6</label>
+                          <input class="form-control glass-input" type="number" step="0.01" id="sachet_2g_6" name="sachet_2g_6" placeholder="optional">
+                        </div>
+                        <div class="col-12 col-md-6">
+                          <label class="form-label text-soft">sachet_2g_8</label>
+                          <input class="form-control glass-input" type="number" step="0.01" id="sachet_2g_8" name="sachet_2g_8" placeholder="optional">
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+
+              <div class="d-grid gap-2">
+                <button class="btn btn-primary btn-lg" type="submit" id="btnPredict">
+                  <i class="bi bi-magic me-1"></i> Predict Churn
+                </button>
+                <button class="btn btn-outline-light" type="button" id="btnClear">Clear</button>
+              </div>
+
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- OUTPUT -->
+      <div class="col-12 col-lg-5">
+        <div class="glass cardx sticky-out">
+          <div class="cardx-header">
+            <div>
+              <h5 class="mb-0">Output</h5>
+              <div class="text-soft small">Probability • Risk • Recommendation • Engineered • SHAP</div>
+            </div>
+          </div>
+
+          <div class="cardx-body">
+            <div id="resultEmpty" class="text-soft">
+              Load a preset or fill inputs, then click <b>Predict Churn</b>.
+            </div>
+
+            <div id="resultBox" class="d-none">
+
+              <div class="d-flex align-items-center justify-content-between gap-2 flex-wrap">
+                <div>
+                  <div class="text-soft">Churn Probability</div>
+                  <div class="prob-big" id="probText">--%</div>
+                </div>
+                <div><span class="badge fs-6" id="riskBadge">--</span></div>
+              </div>
+
+              <!-- Gauge / Dial -->
+              <div class="gauge-shell my-2">
+                <div class="gauge-circle"></div>
+                <div class="gauge-cutout"></div>
+                <div class="gauge-needle" id="gNeedle"></div>
+                <div class="gauge-pivot"></div>
+                <div class="gauge-text" id="gValue">--%</div>
+              </div>
+
+              <!-- Keep progress bar too -->
+              <div class="mt-2">
+                <div class="progress glass-progress" style="height: 10px;">
+                  <div class="progress-bar" id="probBar" style="width:0%"></div>
+                </div>
+              </div>
+
+              <div class="divider"></div>
+
+              <h6 class="mb-2"><i class="bi bi-shield-check me-1"></i>Retention Recommendation</h6>
+              <div class="small text-soft mb-2" id="recUrgency"></div>
+              <div class="mb-2" id="recMessage"></div>
+
+              <div class="row g-2">
+                <div class="col-12">
+                  <div class="fw-semibold small">Reasons</div>
+                  <ul class="small mb-0" id="recReasons"></ul>
+                </div>
+                <div class="col-12 mt-2">
+                  <div class="fw-semibold small">Suggested Offers</div>
+                  <ul class="small mb-0" id="recOffers"></ul>
+                </div>
+              </div>
+
+              <div class="divider"></div>
+
+              <!-- Engineered preview -->
+              <div class="d-flex align-items-center justify-content-between">
+                <h6 class="mb-0"><i class="bi bi-calculator me-1"></i>Engineered Features (Auto)</h6>
+                <button class="btn btn-sm btn-outline-light" type="button"
+                        data-bs-toggle="collapse" data-bs-target="#engCollapse">
+                  Toggle
+                </button>
+              </div>
+
+              <div class="collapse show mt-2" id="engCollapse">
+                <div class="table-responsive">
+                  <table class="table table-sm table-glass">
+                    <thead>
+                      <tr>
+                        <th>Engineered Feature</th>
+                        <th class="text-end">Value</th>
+                      </tr>
+                    </thead>
+                    <tbody id="engTableBody"></tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div class="divider"></div>
+
+              <div class="d-flex align-items-center justify-content-between">
+                <h6 class="mb-0"><i class="bi bi-activity me-1"></i>SHAP Top Drivers</h6>
+                <div class="small text-soft" id="shapStatus"></div>
+              </div>
+
+              <div class="mt-2" id="shapBlock">
+                <div id="shapBars" class="shap-bars"></div>
+
+                <div class="table-responsive mt-2">
+                  <table class="table table-sm table-glass">
+                    <thead>
+                      <tr>
+                        <th>Feature</th>
+                        <th class="text-end">Value</th>
+                        <th class="text-end">SHAP</th>
+                        <th>Direction</th>
+                      </tr>
+                    </thead>
+                    <tbody id="shapTableBody"></tbody>
+                  </table>
+                </div>
+
+                <div class="small text-soft" id="shapBase"></div>
+              </div>
+
+            </div>
+
+            <div class="alert alert-danger mt-3 d-none" id="errBox"></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>

@@ -38,6 +38,19 @@ This system helps telecom companies:
 > Metrics are from model evaluation during training/validation.
 
 ---
+---
+
+##  Final Model Dashboard & Insights
+
+This dashboard summarizes the end-to-end evaluation of the churn prediction system. It highlights the model comparison, performance metrics, and the business-centric risk segmentation strategy.
+
+![Project Dashboard](dashboard.png)
+
+### Key Takeaways from the Analysis:
+- **Winning Model:** Tuned XGBoost outperformed Logistic Regression and Random Forest with an **AUC-ROC of 0.938**.
+- **Top Churn Drivers:** Incoming usage (`total_ic_mou_8`) and revenue trends were the strongest predictors of churn.
+- **Actionable Segmentation:** The model successfully isolated a high-risk "RED" segment where **93.9%** of customers actually churned, allowing for highly targeted retention efforts.
+- **Retention Strategy:** Developed a prioritized intervention plan ranging from immediate calls for RED tier to monthly engagement for GREEN tier.
 
 ## Risk Segmentation
 
